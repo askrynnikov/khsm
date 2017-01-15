@@ -83,4 +83,20 @@ RSpec.describe Game, type: :model do
       expect(game_w_questions.status).to eq(:money)
     end
   end
+
+  context 'inspection methods' do
+    it 'current_game_question' do
+      expect(game_w_questions.current_game_question).to eq(
+                                                          game_w_questions.game_questions.detect { |q| q.question.level == game_w_questions.current_level }
+                                                        )
+    end
+    it 'previous_game_question' do
+      expect(game_w_questions.previous_game_question).to eq(
+                                                           game_w_questions.game_questions.detect { |q| q.question.level == game_w_questions.previous_level }
+                                                         )
+    end
+    it 'previous_level' do
+      expect(game_w_questions.previous_level).to eq(game_w_questions.current_level - 1)
+    end
+  end
 end
