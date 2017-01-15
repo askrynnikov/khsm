@@ -101,11 +101,10 @@ class Game < ActiveRecord::Base
     return false if time_out! || finished? # законченную игру низя обновлять
 
     if current_game_question.answer_correct?(letter)
-      if current_level == Question::QUESTION_LEVELS.max
-        self.current_level += 1
+      self.current_level += 1
+      if current_level > Question::QUESTION_LEVELS.max
         finish_game!(PRIZES[Question::QUESTION_LEVELS.max], false)
       else
-        self.current_level += 1
         save!
       end
 

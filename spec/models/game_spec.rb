@@ -84,6 +84,41 @@ RSpec.describe Game, type: :model do
     end
   end
 
+# группа тестов на проверку метода answer_current_question
+  context '.answer_current_question' do
+
+    it 'answer correct' do
+      expect {
+        expect(
+          game_w_questions.answer_current_question!(game_w_questions.current_game_question.correct_answer_key)
+        ).to be true
+      }.to change(game_w_questions, :current_level).by(1)
+    end
+
+    it 'last answer correct' do
+      game_w_questions.current_level == Question::QUESTION_LEVELS.max
+
+      expect(
+        game_w_questions.answer_current_question!(game_w_questions.current_game_question.correct_answer_key)
+      ).to be true
+    end
+
+    it 'answer not correct' do
+      not_correct_answer_key = (['a','b','c','d'] - [game_w_questions.current_game_question.correct_answer_key]).sample
+      expect(
+        game_w_questions.answer_current_question!(not_correct_answer_key)
+      ).to be false
+    end
+
+    it 'answer time out' do
+      game_w_questions.created_at = 1.hour.ago
+      game_w_questions.finished_at = Time.now
+      expect(
+        game_w_questions.answer_current_question!(game_w_questions.current_game_question.correct_answer_key)
+      ).to be false
+    end
+  end
+
   context 'inspection methods' do
     it 'current_game_question' do
       expect(game_w_questions.current_game_question).to eq(
