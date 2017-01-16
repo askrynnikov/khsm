@@ -16,11 +16,12 @@ RSpec.describe GamesController, type: :controller do
       expect(flash[:alert]).to be
     end
 
-    # it 'may cause only #show' do
-    #   get :show
-    #
-    #   expect(response.status).not_to eq 200
-    # end
+    it 'may cause only #show' do
+      get :show, id: game_w_questions.id
+
+      # expect(assigns(:game)).to eq(game_w_questions)
+      # expect(response).to render_template(:show)
+    end
   end
 
   context 'Usual user' do
@@ -113,6 +114,5 @@ RSpec.describe GamesController, type: :controller do
 
       expect(response).to redirect_to user_path(user)
     end
-
   end
 end

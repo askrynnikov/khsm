@@ -104,7 +104,7 @@ RSpec.describe Game, type: :model do
     end
 
     it 'answer not correct' do
-      not_correct_answer_key = (['a','b','c','d'] - [game_w_questions.current_game_question.correct_answer_key]).sample
+      not_correct_answer_key = (['a', 'b', 'c', 'd'] - [game_w_questions.current_game_question.correct_answer_key]).sample
       expect(
         game_w_questions.answer_current_question!(not_correct_answer_key)
       ).to be false
@@ -122,16 +122,14 @@ RSpec.describe Game, type: :model do
   context 'inspection methods' do
     it 'current_game_question' do
       expect(game_w_questions.current_game_question).to eq(
-                                                          game_w_questions.game_questions.detect { |q| q.question.level == game_w_questions.current_level }
+                                                          game_w_questions.game_questions[0]
                                                         )
     end
     it 'previous_game_question' do
-      expect(game_w_questions.previous_game_question).to eq(
-                                                           game_w_questions.game_questions.detect { |q| q.question.level == game_w_questions.previous_level }
-                                                         )
+      expect(game_w_questions.previous_game_question).to be nil
     end
     it 'previous_level' do
-      expect(game_w_questions.previous_level).to eq(game_w_questions.current_level - 1)
+      expect(game_w_questions.previous_level).to eq(-1)
     end
   end
 end
