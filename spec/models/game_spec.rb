@@ -86,36 +86,86 @@ RSpec.describe Game, type: :model do
 
 # группа тестов на проверку метода answer_current_question
   context '.answer_current_question' do
-
     it 'answer correct' do
       expect {
         expect(
           game_w_questions.answer_current_question!(game_w_questions.current_game_question.correct_answer_key)
         ).to be true
       }.to change(game_w_questions, :current_level).by(1)
+
+      expect(game_w_questions.status).to eq(:in_progress)
+
     end
 
     it 'last answer correct' do
-      game_w_questions.current_level == Question::QUESTION_LEVELS.max
+      game_w_questions.current_level = Question::QUESTION_LEVELS.max
 
-      expect(
-        game_w_questions.answer_current_question!(game_w_questions.current_game_question.correct_answer_key)
-      ).to be true
+      expect {
+        expect(
+          game_w_questions.answer_current_question!(game_w_questions.current_game_question.correct_answer_key)
+        ).to be true
+      }.to change(user, :balance).by(Game::PRIZES.max)
+
+      expect(game_w_questions.status).to eq(:won)
+      expect(game_w_questions.prize).to eq(Game::PRIZES.max)
     end
 
-    it 'answer not correct' do
+    it 'answer not correct without guaranteed sum' do
       not_correct_answer_key = (['a', 'b', 'c', 'd'] - [game_w_questions.current_game_question.correct_answer_key]).sample
-      expect(
-        game_w_questions.answer_current_question!(not_correct_answer_key)
-      ).to be false
+
+      expect {
+        expect(
+          game_w_questions.answer_current_question!(not_correct_answer_key)
+        ).to be false
+      }.to change(user, :balance).by(0)
+
+      expect(game_w_questions.status).to eq(:fail)
     end
 
-    it 'answer time out' do
+    it 'answer not correct with guaranteed sum' do
+      6.times do
+        game_w_questions.answer_current_question!(game_w_questions.current_game_question.correct_answer_key)
+      end
+
+      not_correct_answer_key = (['a', 'b', 'c', 'd'] - [game_w_questions.current_game_question.correct_answer_key]).sample
+      expect {
+        expect(
+          game_w_questions.answer_current_question!(not_correct_answer_key)
+        ).to be false
+      }.to change(user, :balance).by(1_000)
+
+      expect(game_w_questions.status).to eq(:fail)
+    end
+
+
+    it 'answer time out without guaranteed sum' do
       game_w_questions.created_at = 1.hour.ago
       game_w_questions.finished_at = Time.now
-      expect(
+
+      expect {
+        expect(
+          game_w_questions.answer_current_question!(game_w_questions.current_game_question.correct_answer_key)
+        ).to be false
+      }.to change(user, :balance).by(0)
+
+      expect(game_w_questions.status).to eq(:timeout)
+    end
+
+    it 'answer time out with guaranteed sum' do
+      6.times do
         game_w_questions.answer_current_question!(game_w_questions.current_game_question.correct_answer_key)
-      ).to be false
+      end
+
+      game_w_questions.created_at = 1.hour.ago
+      game_w_questions.finished_at = Time.now
+
+      expect {
+        expect(
+          game_w_questions.answer_current_question!(game_w_questions.current_game_question.correct_answer_key)
+        ).to be false
+      }.to change(user, :balance).by(1_000)
+
+      expect(game_w_questions.status).to eq(:timeout)
     end
   end
 
