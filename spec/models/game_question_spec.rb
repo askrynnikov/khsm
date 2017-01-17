@@ -24,6 +24,24 @@ RSpec.describe GameQuestion, type: :model do
       # именно под буквой b в тесте мы спрятали указатель на верный ответ
       expect(game_question.answer_correct?('b')).to be_truthy
     end
+
+    it 'correct .help_hash' do
+      expect(game_question.help_hash).to eq({})
+
+      game_question.help_hash[:fifty_fifty] = ['a', 'b']
+      game_question.help_hash[:audience_help] = {'a' => 25, 'b' => 25, 'c' => 20, 'd' => 30}
+      game_question.help_hash[:friend_call] = 'Василий Петрович считает, что правильный ответ A'
+
+      expect(game_question.save).to be_truthy
+
+      gq = GameQuestion.find(game_question.id)
+
+      expect(gq.help_hash).to eq({
+                                   fifty_fifty: ['a', 'b'],
+                                   audience_help: {'a' => 25, 'b' => 25, 'c' => 20, 'd' => 30},
+                                   friend_call: 'Василий Петрович считает, что правильный ответ A'
+                                 })
+    end
   end
 
   # help_hash у нас имеет такой формат:
