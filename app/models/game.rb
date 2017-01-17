@@ -101,10 +101,11 @@ class Game < ActiveRecord::Base
     return false if time_out! || finished? # законченную игру низя обновлять
 
     if current_game_question.answer_correct?(letter)
-      self.current_level += 1
-      if current_level > Question::QUESTION_LEVELS.max
+      if current_level == Question::QUESTION_LEVELS.max
+        self.current_level += 1
         finish_game!(PRIZES[Question::QUESTION_LEVELS.max], false)
       else
+        self.current_level += 1
         save!
       end
 
@@ -120,6 +121,46 @@ class Game < ActiveRecord::Base
     return if time_out! || finished? # из законченной или неначатой игры нечего брать
     finish_game!((previous_level > -1) ? PRIZES[previous_level] : 0, false)
   end
+
+
+  # todo: дорогой ученик!
+  # Код метода ниже можно сократиь в 3 раза с помощью возможностей Ruby и Rails,
+  # подумайте как и реализуйте. Помните о безопасности и входных данных!
+  #
+  # Вариант решения вы найдете в комментарии в конце файла, отвечающего за настройки
+  # хранения сессий вашего приложения. Вот такой вот вам ребус :)
+
+  # Создает варианты подсказок для текущего игрового вопроса.
+  # Возвращает true, если подсказка применилась успешно,
+  # false если подсказка уже заюзана.
+  #
+  # help_type = :fifty_fifty | :audience_help | :friend_call
+  def use_help(help_type)
+    case help_type
+    when :fifty_fifty
+      unless fifty_fifty_used
+        # ActiveRecord метод toggle! переключает булевое поле сразу в базе
+        toggle!(:fifty_fifty_used)
+        current_game_question.add_fifty_fifty
+        return true
+      end
+    when :audience_help
+      unless audience_help_used
+        toggle!(:audience_help_used)
+        current_game_question.add_audience_help
+        return true
+      end
+    when :friend_call
+      unless friend_call_used
+        toggle!(:friend_call_used)
+        current_game_question.add_friend_call
+        return true
+      end
+    end
+
+    false
+  end
+
 
   # Результат игры, одно из:
   # :fail - игра проиграна из-за неверного вопроса
@@ -173,4 +214,5 @@ class Game < ActiveRecord::Base
     lvl = FIREPROOF_LEVELS.select { |x| x <= answered_level }.last
     lvl.present? ? PRIZES[lvl] : 0
   end
+
 end
