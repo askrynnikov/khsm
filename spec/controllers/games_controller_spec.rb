@@ -28,6 +28,38 @@ RSpec.describe GamesController, type: :controller do
       expect(response).to redirect_to(new_user_session_path) # devise должен отправить на логин
       expect(flash[:alert]).to be # во flash должен быть прописана ошибка
     end
+
+    it 'kick from #create' do
+      get :create, id: game_w_questions.id
+
+      expect(response.status).not_to eq(200) # статус не 200 ОК
+      expect(response).to redirect_to(new_user_session_path)
+      expect(flash[:alert]).to be
+    end
+
+    it 'kick from #help' do
+      put :help, id: game_w_questions.id
+
+      expect(response.status).not_to eq(200) # статус не 200 ОК
+      expect(response).to redirect_to(new_user_session_path)
+      expect(flash[:alert]).to be
+    end
+
+    it 'kick from #answer' do
+      put :take_money, id: game_w_questions.id
+
+      expect(response.status).not_to eq(200) # статус не 200 ОК
+      expect(response).to redirect_to(new_user_session_path)
+      expect(flash[:alert]).to be
+    end
+
+    it 'kick from #create' do
+      get :create, id: game_w_questions.id
+
+      expect(response.status).not_to eq(200) # статус не 200 ОК
+      expect(response).to redirect_to(new_user_session_path)
+      expect(flash[:alert]).to be
+    end
   end
 
   # группа тестов на экшены контроллера, доступных залогиненным юзерам
@@ -93,7 +125,7 @@ RSpec.describe GamesController, type: :controller do
     end
 
     # тест на отработку "50 / 50"
-    it 'uses audience help' do
+    it 'uses fifty fifty' do
       # сперва проверяем что в подсказках текущего вопроса пусто
       expect(game_w_questions.current_game_question.help_hash[:fifty_fifty]).not_to be
       expect(game_w_questions.fifty_fifty_used).to be_falsey
@@ -109,6 +141,44 @@ RSpec.describe GamesController, type: :controller do
       expect(game.current_game_question.help_hash[:fifty_fifty]).to include('b')
       expect(game.current_game_question.help_hash[:fifty_fifty].size).to eq 2
       expect(response).to redirect_to(game_path(game))
+    end
+
+    it 'show alien game' do
+      new_user = FactoryGirl.create(:user)
+      alien_game = FactoryGirl.create(:game_with_questions, user: new_user)
+
+      get :show, id: alien_game.id
+
+      expect(response.status).not_to eq(200)
+      expect(response).to redirect_to(root_path)
+      expect(flash[:alert]).to be
+    end
+
+    it 'user take money' do
+      game_w_questions.answer_current_question!(game_w_questions.current_game_question.correct_answer_key)
+
+      put :take_money, id: game_w_questions.id
+
+      game = assigns(:game)
+      expect(game.finished?).to be_truthy
+      expect(game.prize).to eq(100)
+
+      expect(response).to redirect_to user_path(user)
+      expect(flash[:warning]).to be
+
+      expect { user.reload }.to change(user, :balance).by(100)
+    end
+
+    it 'user tries to start the second game' do
+      expect(game_w_questions.finished?).to be_falsey
+
+      expect { post :create }.to change(Game, :count).by(0)
+
+      game = assigns(:game)
+      expect(game).to be_nil
+
+      expect(response).to redirect_to(game_path(game_w_questions))
+      expect(flash[:alert]).to be
     end
 
     it 'answer not correct' do
