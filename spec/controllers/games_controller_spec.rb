@@ -110,5 +110,17 @@ RSpec.describe GamesController, type: :controller do
       expect(game.current_game_question.help_hash[:fifty_fifty].size).to eq 2
       expect(response).to redirect_to(game_path(game))
     end
+
+    it 'answer not correct' do
+      not_correct_answer_key = (%w(a b c d) - [game_w_questions.current_game_question.correct_answer_key]).sample
+      put :answer, id: game_w_questions.id, letter: not_correct_answer_key
+
+      game = assigns(:game)
+      expect(game.finished?).to be true
+
+      expect(response).to redirect_to user_path(user)
+
+      expect(flash[:alert]).to be
+    end
   end
 end

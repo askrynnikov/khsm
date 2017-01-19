@@ -39,6 +39,10 @@ Rails.application.configure do
 
   # Raises error for missing translations
   # config.action_view.raise_on_missing_translations = true
+
+  # Настраиваем отдавание статических файлов для тестов
+  config.assets.debug = true
+  config.asset_host   = 'http://localhost:3000'
 end
 
 #
